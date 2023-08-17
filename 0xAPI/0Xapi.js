@@ -1,13 +1,20 @@
 const qs = require("qs");
+require("dotenv").config();
+assetA = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
+(assetB = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+  (assetC = "0x61935CbDd02287B511119DDb11Aeb42F1593b7Ef");
 
-async function fetchQuoteAndLog() {
+async function fetchQuoteAndLog(soldToken, boughtToken) {
   const params = {
-    sellToken: "0x6B175474E89094C44Da98b954EedeAC495271d0F", //DAI
-    buyToken: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", //WETH
-    sellAmount: "100000000000000000000",
+    sellToken: soldToken, //DAI
+    buyToken: boughtToken, //WETH
+    sellAmount: "100000000000000000000", // 18 Decimal Places
   };
 
-  const headers = { "0x-api-key": "3332a7c8-bc45-4db5-a11f-8ad9e068a995" };
+  const apiKey = process.env.API_KEY;
+  const headers = { "0x-api-key": apiKey };
+
+  // Now you can use the `headers` object in your requests
 
   try {
     const response = await fetch(
@@ -17,9 +24,47 @@ async function fetchQuoteAndLog() {
 
     const jsonResponse = await response.json();
     console.log(jsonResponse);
+    return jsonResponse;
   } catch (error) {
     console.error("Error fetching quote:", error);
   }
 }
 
-fetchQuoteAndLog(); // Call the async function to execute the code
+async function findArbitrageOpportunities() {
+  const pairs = [
+    [assetA, assetB],
+    [assetB, assetC],
+    [assetC, assetA],
+  ];
+
+  for (let i = 0; i < pairs.length; i++) {
+    console.log("iteration", i);
+    const [asset1, asset2] = pairs[i];
+    const [_, asset3] = pairs[(i + 1) % pairs.length];
+
+    order1 = await fetchQuoteAndLog(asset1, asset2);
+    order2 = await fetchQuoteAndLog(asset2, asset3);
+    order3 = await fetchQuoteAndLog(asset3, asset1);
+
+    console.log(
+      "ob1",
+      order1.code,
+      order1.grossBuyAmount,
+      order1.grossSellAmount
+    );
+    console.log(
+      "ob2",
+      order2.code,
+      order2.grossBuyAmount,
+      order2.grossSellAmount
+    );
+    console.log(
+      "ob3",
+      order3.code,
+      order3.grossBuyAmount,
+      order3.grossSellAmount
+    );
+  }
+}
+
+findArbitrageOpportunities();
